@@ -1,0 +1,44 @@
+Preset temperature mode (Activated = 1; Inactivated = 0)
+0
+Number of thermal solve grid points in the x, y, z directions
+100 3 3
+lsurface,rsurface, electron grid units (positive integer); grid_number+1 for the right side, according to the lattice dimension
+40 90
+Initial material temperature, temperature units
+300
+I_0, energy/(time*length^2) units; 6241.51 (100fs 1.0J/1000mJ)
+218.45
+pulse width, time units
+0.10
+laser wavelength (A)
+8000
+PF, dimensionless 0.667
+0.667
+lambda, electron mean free path, length units
+4
+n_ion, ions/volume units
+0.059
+New Pulse, 1 for activate, 0 for inactivate
+0
+bulk_ttm, 1 for activate, 0 for inactivate
+1
+Atomic mass of the bulk target, grams/mole
+196.97
+Target lattice structure (1 for bcc, 2 for fcc)
+2
+Target melting point (K)
+1337
+Target latent heat of fusion (eV/mol) 12.55 kJ/mol
+7.833e22
+Boundary thickness, length units (A), slightly larger than potential cutoff
+6.05032983
+Static pressure at the boundary P0 (for F0), energy/length^3 units (eV/A^3); 0.120904; 0.0252554347
+0.0252554347
+Atomic cross-section, (A^2), fcc -> 0.5*a^2; bcc -> a^2; a is lattice parameter
+8.315
+Speed of sound in the target, (A/ps) 32.40
+12.00
+bulk thickness, length units, (A), 1 micron = 10000
+18000
+In the bulk, number of grid points, dx >= 100 A
+180

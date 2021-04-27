@@ -1,0 +1,12 @@
+# Free electron Z
+Au_Z.dat
+# Heat Capacity Table
+Au_Ce.dat
+# Coupling Constant Table // G_W2.txt
+Au_G.dat
+# Heat Conductivity Table
+Au_Ke.dat
+# Surface Reflectivity
+Au_Reflec_0.dat
+# Penetration Depth
+Au_Pen_0.dat

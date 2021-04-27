@@ -1,0 +1,59 @@
+# -- Initialization --
+units metal
+dimension 3
+boundary f p p
+# processors 12 2 2
+atom_style atomic # for metal
+atom_modify id yes # map array # id is required for eam potential
+
+# ---- Geo variable ----
+variable min_x equal 0
+variable max_x equal 1000
+variable min_y equal 0
+variable max_y equal 30
+variable min_z equal 0
+variable max_z equal 30
+
+# ---- Lattice variable ----
+variable lmax_x equal ${max_x}-100 # 900
+variable lmin_x equal ${lmax_x}-500 # 400
+
+# ---- create W atoms ----
+lattice fcc 4.077998
+region rgn_box block ${min_x} ${max_x} ${min_y} ${max_y} ${min_z} ${max_z}
+create_box 5 rgn_box
+region rgn_lattice block ${lmin_x} ${lmax_x} ${min_y} ${max_y} ${min_z} ${max_z}
+create_atoms 1 region rgn_lattice
+
+# ---- potential ----
+pair_style eam/alloy # Embedded-atom method (EAM)
+# pair_coeff * * ./Au_GLJ10_3.eam.alloy Au
+pair_coeff * * ./Au_5T.eam.alloy Au Au_1.5 Au_3.0 Au_4.5 Au_6.0
+neighbor 2.0 bin
+neigh_modify delay 10 every 1 check yes # one 5000 # can modify this to increase computing speed
+
+
+# ---- Init W temp ----
+variable Au_temp equal 600 #kelvin room temperature
+velocity all create ${Au_temp} 12345 rot yes dist gaussian
+
+# ---- Time ----
+timestep 0.001
+
+print "Done with creating atoms" append time.txt
+
+thermo 100
+thermo_style custom step temp etotal tpcpu time # timeremain
+thermo_modify lost warn
+
+# ---- Temperature rescaling ----
+
+comm_style tiled
+fix b2 all balance 100 1.05 rcb out tmp.balance
+fix f2 all nve
+fix fttm all femto3D 123456 1000 Au_parameters_pre.txt Au_tablelist_pre.txt
+restart 10000 TTM_restart_*.mpiio
+run 50000
+reset_timestep 0
+write_restart restart.equil.mpiio
+print "Done with pre temperature" append time.txt

@@ -1,0 +1,38 @@
+# ---- Read Restart file ----
+# read_restart restart.equil.mpiio
+read_restart TTM_restart_*.mpiio
+
+# ---- Interatomic Potential ----
+pair_style eam/alloy # Embedded-atom method (EAM)
+pair_coeff * * ./Au_5T.eam.alloy Au Au_1.5 Au_3.0 Au_4.5 Au_6.0 
+neighbor 2.0 bin
+neigh_modify delay 10 every 1 check yes # one 5000 # can modify this to increase computing speed
+
+# ---- Screen Output ----
+thermo 100
+thermo_style custom step temp etotal tpcpu time # timeremain
+thermo_modify lost warn
+
+print "Done with thermo" append time.txt
+
+# ---- Computing section ----
+compute cluster all cluster/atom 5.6 # 6.05032983
+compute stress all stress/atom NULL virial
+compute volume all voronoi/atom
+compute entropy all entropy/atom 0.25 5 avg yes 2 local yes
+
+# ---- TTM ----
+comm_style tiled
+fix b2 all balance 100 1.05 rcb out tmp.balance
+fix f2 all nve
+fix fttm all femto3D 123456 1000 Au_parameters_test.txt Au_tablelist.txt Outlist.txt
+
+# ---- RUN ----
+timestep 0.001
+restart 10000 TTM_restart_*.mpiio
+dump myDump all custom 1000 Au_p0.1_i17500_*.dump id type xs ys zs c_stress[1] c_volume[1] c_cluster c_entropy
+# dump myDump all custom 100 Au_early_*.dump type xs c_stress[1] c_volume[1]
+# undump myDump
+run 30000
+
+print "Done with TTM" append time.txt
