@@ -17,4 +17,5 @@ The `read.cpp` and `read2.cpp` are to process the dump files from LAMMPS outputs
 `mpiexec -np 60 PATH/TO/YOUR/lmp_mpi -in Au_TTM_restart.in` as in `run.sh`.
 
 ## Tips
-Use `tmux` in a remote server for long runs.
+- It is recommended to run Preheating and Common runs in seperate folders.
+- Use `tmux` in a remote server for long runs.
