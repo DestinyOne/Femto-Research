@@ -12,3 +12,6 @@ The LAMMPS input file requires a restart file which would be generated from the 
 
 ## `Analysis`
 The `read.cpp` and `read2.cpp` are to process the dump files from LAMMPS outputs and they should run in order. The rest MATLAB files are to generate figures using the temperature files from LAMMPS and the output files from `read.cpp` and `read2.cpp`.
+
+## Example commands to run LAMMPS simulations
+`mpiexec -np 60 PATH/TO/YOUR/lmp_mpi -in Au_TTM_restart.in`
