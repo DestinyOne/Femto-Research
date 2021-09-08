@@ -52,7 +52,7 @@ comm_style tiled
 fix b2 all balance 100 1.05 rcb out tmp.balance
 fix f2 all nve
 fix fttm all femto3D 123456 1000 Au_parameters_pre.txt Au_tablelist_pre.txt
-restart 10000 TTM_restart_*.mpiio
+restart 10000 TTM_pre_restart_*.mpiio
 run 50000
 reset_timestep 0
 write_restart restart.equil.mpiio
