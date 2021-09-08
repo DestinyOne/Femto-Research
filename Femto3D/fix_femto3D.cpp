@@ -1882,7 +1882,7 @@ void FixFEMTO3D::restart(char *buf)
     }
   }
 
-  if (premode == 0) {
+  if (premode == 1) {
     // It is empty here
   }
   delete random;
