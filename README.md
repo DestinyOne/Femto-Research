@@ -11,7 +11,7 @@ A target generated in MD is preheated to a wanted temperature and then relaxes t
 The LAMMPS input file requires a restart file which would be generated from the Preheating LAMMPS codes. The restart file by default should be renamed from `restart.equil.mpiio` to `TTM_restart_0.mpiio`.
 
 ## `Au Parameters`
-Example parameters for Au.
+Example parameters for Au. They are required for common runs.
 
 ## `Analysis`
 The `read.cpp` and `read2.cpp` are to process the dump files from LAMMPS outputs and they should run in order. The rest MATLAB files are to generate figures using the temperature files from LAMMPS and the output files from `read.cpp` and `read2.cpp`.
