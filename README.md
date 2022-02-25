@@ -4,7 +4,7 @@ Codes for femtosecond laser interaction research.
 If you have any questions, please email yuanweirong78@gmail.com.
 
 ## `Femto3D`
-This is the modified LAMMPS function based on its two-temperature function.
+This is the modified LAMMPS function based on its two-temperature function. Put it in the same folder as `fix_ttm_mod.cpp` and compile in the same way. Reference: https://docs.lammps.org/fix_ttm.html#fix-ttm-mod-command
 
 ## `Preheating`
 A target generated in MD is preheated to a wanted temperature and then relaxes to equilibrium. The output file for further use is a LAMMPS restart file for further simulation. The default output from the sample input code is `restart.equil.mpiio`.
