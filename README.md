@@ -1,5 +1,5 @@
 # Femto-Research
-Codes for femtosecond laser interaction research. If you have any questions, please email yuanweirong78@gmail.com
+Codes for femtosecond laser interaction research. If you have any questions, please email yuanweirong78@gmail.com.
 
 ## `Femto3D`
 This is the modified LAMMPS function based on its two-temperature function.
