@@ -1,5 +1,5 @@
 # Femto-Research
-Codes for femtosecond laser interaction research. 
+Codes for femtosecond laser interaction research. Note Femto3D does not work in LAMMPS version later than 2021.
 
 If you have any questions, please email yuanweirong78@gmail.com.
 
