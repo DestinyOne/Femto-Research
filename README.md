@@ -15,7 +15,7 @@ The LAMMPS input file requires a restart file which would be generated from the 
 ## `Au Parameters`
 Example parameters for Au. They are required for common runs. The units are based on the metal-style of LAMMPS. 
 
-Ke: eV/(psxAxK); Ce: eV/(A^3xK); G: eV/(A^3xpsxK).
+Ke: eV / (ps * A * K); Ce: eV / (A^3 * K); G: eV / (A^3 * ps * K).
 
 ## `Analysis`
 The `read.cpp` and `read2.cpp` are to process the dump files from LAMMPS outputs and they should run in order. The rest MATLAB files are to generate figures using the temperature files from LAMMPS and the output files from `read.cpp` and `read2.cpp`.
