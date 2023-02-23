@@ -28,4 +28,4 @@ The `read.cpp` and `read2.cpp` are to process the dump files from LAMMPS outputs
 - Use `tmux` in a remote server for long runs.
 
 ## Reference
-- [Ablation study in gold irradiated by single femtosecond laser pulse with electron temperature dependent interatomic potential and electron–phonon coupling factor](https://iopscience.iop.org/article/10.1088/1555-6611/abdcb8/meta)
+- [Paper: Ablation study in gold irradiated by single femtosecond laser pulse with electron temperature dependent interatomic potential and electron–phonon coupling factor](https://iopscience.iop.org/article/10.1088/1555-6611/abdcb8/meta/)
