@@ -191,7 +191,7 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS *lmp, int narg, char **arg) :
   crit_num_f = 0.1;
   dx = domain->xprd/nxnodes;
   dy = domain->yprd/nynodes;
-  dz = domain->zprd/nynodes;
+  dz = domain->zprd/nznodes;
   del_vol = dx*dy*dz;
   if (bulk_ttm == 1) {
     Latent_melt *= ionic_density / Na; // in eV/A^3
