@@ -4,7 +4,7 @@ Codes for femtosecond laser interaction research. Note Femto3D works in LAMMPS w
 If you have any questions, please email yuanweirong78@gmail.com.
 
 ## `Femto3D`
-This is the modified LAMMPS function based on its two-temperature function. Put `fix_femto3D.cpp` and `fix_femto3D.h` in the same folder as `fix_ttm_mod.cpp` (src/EXTRA-FIX) and compile in the same way. Put `femto3D.cmke` in the `cmake\presets` folder inside LAMMPS folder. `installation help.txt` is a file useful for the installation Reference: https://docs.lammps.org/fix_ttm.html#fix-ttm-mod-command
+This is the modified LAMMPS function based on its two-temperature function. Put `fix_femto3D.cpp` and `fix_femto3D.h` in the same folder as `fix_ttm_mod.cpp` (`src/EXTRA-FIX`) and compile in the same way. Put `femto3D.cmke` in the `cmake\presets` folder inside LAMMPS folder. `installation help.txt` is a file useful for the installation Reference: https://docs.lammps.org/fix_ttm.html#fix-ttm-mod-command
 
 ## `Preheating`
 A target generated in MD is preheated to a wanted temperature and then relaxes to equilibrium. The output file for further use is a LAMMPS restart file for further simulation. The default output from the sample input code is `restart.equil`. Example: `mpiexec -np 60 PATH/TO/YOUR/lmp_mpi -in Au_TTM_pre.in` with all necessary parameter files in the same folder.
