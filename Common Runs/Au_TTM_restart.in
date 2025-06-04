@@ -1,10 +1,10 @@
 # ---- Read Restart file ----
-# read_restart restart.equil.mpiio
-read_restart TTM_restart_*.mpiio
+# read_restart restart.equil
+read_restart TTM_restart.*
 
 # ---- Interatomic Potential ----
 pair_style eam/alloy # Embedded-atom method (EAM)
-pair_coeff * * ./Au_5T.eam.alloy Au Au_1.5 Au_3.0 Au_4.5 Au_6.0 
+pair_coeff * * ./Au_5T.eam.alloy Au Au_1.5 Au_3.0 Au_4.5 Au_6.0
 neighbor 2.0 bin
 neigh_modify delay 10 every 1 check yes # one 5000 # can modify this to increase computing speed
 
@@ -29,7 +29,7 @@ fix fttm all femto3D 123456 1000 Au_parameters_test.txt Au_tablelist.txt Outlist
 
 # ---- RUN ----
 timestep 0.001
-restart 10000 TTM_restart_*.mpiio
+restart 10000 TTM_restart.*
 dump myDump all custom 1000 Au_p0.1_i17500_*.dump id type xs ys zs c_stress[1] c_volume[1] c_cluster c_entropy
 # dump myDump all custom 100 Au_early_*.dump type xs c_stress[1] c_volume[1]
 # undump myDump

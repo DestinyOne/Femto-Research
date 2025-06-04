@@ -12,9 +12,9 @@
 ------------------------------------------------------------------------- */
 
 #ifdef FIX_CLASS
-
-FixStyle(femto3D,FixFEMTO3D)
-
+// clang-format off
+FixStyle(femto3D, FixFEMTO3D)
+// clang-format on
 #else
 
 #ifndef LMP_FIX_FEMTO3D_H
@@ -24,9 +24,9 @@ FixStyle(femto3D,FixFEMTO3D)
 
 namespace LAMMPS_NS {
 
-class FixFEMTO3D : public Fix {
+  class FixFEMTO3D : public Fix {
   public:
-    FixFEMTO3D(class LAMMPS *, int, char **);
+    FixFEMTO3D(class LAMMPS*, int, char**);
     ~FixFEMTO3D();
     int setmask();
     void init();
@@ -37,9 +37,9 @@ class FixFEMTO3D : public Fix {
     void post_force_respa_setup(int, int, int);
     void end_of_step();
     void reset_dt();
-    void write_restart(FILE *);
-    void restart(char *);
-    int pack_restart(int, double *);
+    void write_restart(FILE*);
+    void restart(char*);
+    int pack_restart(int, double*);
     void unpack_restart(int, int);
     int size_restart(int);
     int maxsize_restart();
@@ -51,48 +51,50 @@ class FixFEMTO3D : public Fix {
     // Constant
     double epsilon0, speed_light, Pi, e_charge, m_e, k_b, h_bar, Na;
     // Parameters Calculation
-    double ***CeT, ***ke_real, ***GT;
-    double ***CeT_bulk, ***ke_real_bulk, ***GT_bulk, ***ki_bulk;
+    double*** CeT, *** ke_real, *** GT;
+    double*** CeT_bulk, *** ke_real_bulk, *** GT_bulk, *** ki_bulk;
     double dx, dy, dz, dx_bulk, del_vol;
 
-    bool hasrun=false;
+    bool hasrun = false;
     int pid, numP;
     int nfileevery;
     int nlevels_respa;
     int seed, writenn, premode, NewPulse;
     int Cesize, Gsize, Kesize, Reflecsize, Pensize, Zsize;
-    class RanMars *random;
-    FILE *fp_Te_out, *fp_Ta_out, *fp_Et_out, *fp_Tidiff_out, *fp_laser_out, *fp_Te_bulk, *fp_Ta_bulk, *fp_Z, *fp_Ce, *fp_G, *fp_Ke, *fp_Pen, *fp_Reflec, *fp_Te_in, *fp_Te_early_out, *fp_Ta_early_out, *fp_parameter, *fp_tablelist, *fp_outlist;
-    int nxnodes,nynodes,nznodes,total_nnodes;
-    int ***Activated, ***nsum;
-    double *Kenergy, *Genergy;
-    double **CeTe, **GTe, **KeTe, **ReflecTe, **PenTe, **ZTe;
-    double *ratio;
-    double **flangevin;
-    double **x_max;
-    int **Tes;
-    double ***T_electron,***T_electron_old,***T_electron_first,***T_a,***Ta_bulk,***Te_bulk;
-    double ***net_energy_transfer,***energy_conduction,***skin_layer,***mult_factor,***skin_layer_bulk,***mult_factor_bulk,***E_melt_buffer,***sum_mass_vsq, ***sum_mass_v, ***sum_mass, ***average_v;
-    int surface_l,surface_r,t_surface_l,t_surface_r;
+    class RanMars* random;
+
+    std::string fp_outlist, fp_Te_bulk, fp_Ta_bulk, fp_Z, fp_Ce, fp_G, fp_Ke, fp_Pen, fp_Reflec, fp_Te_in, fp_parameter, fp_tablelist, fp_Temp, fp_TempBulk, fp_Te_out, fp_Ta_out, fp_Et_out, fp_Tidiff_out, fp_laser_out, fp_Te_early_out, fp_Ta_early_out;
+
+    int nxnodes, nynodes, nznodes, total_nnodes;
+    int*** Activated, *** nsum;
+    double* Kenergy, * Genergy;
+    double** CeTe, ** GTe, ** KeTe, ** ReflecTe, ** PenTe, ** ZTe;
+    double* ratio;
+    double** flangevin;
+    double** x_max;
+    int** Tes;
+    double*** T_electron, *** T_electron_old, *** T_electron_first, *** T_a, *** Ta_bulk, *** Te_bulk;
+    double*** net_energy_transfer, *** energy_conduction, *** skin_layer, *** mult_factor, *** skin_layer_bulk, *** mult_factor_bulk, *** E_melt_buffer, *** sum_mass_vsq, *** sum_mass_v, *** sum_mass, *** average_v;
+    int surface_l, surface_r, t_surface_l, t_surface_r;
     double electronic_density, reflectivity;
-    double intensity,width,duration,wavelength_laser,surface_double,massT,massone;
+    double intensity, width, duration, wavelength_laser, surface_double, massT, massone;
     double ttm_dt;
-    double pres_factor,free_path,ionic_density,crit_num_f;
-    double T_init,T_melt,Latent_melt,xmin;
+    double pres_factor, free_path, ionic_density, crit_num_f;
+    double T_init, T_melt, Latent_melt, xmin;
     double F_0, A_cross, v_s, bound_thick, bulk_thick;
     int bulk_ttm, bxsize, lstr;
 
-    double GStrength, *ITemp, *ITempBulk;
-    FILE *fp_Temp, *fp_TempBulk;
+    double GStrength, * ITemp, * ITempBulk;
+
     int Tsize, Tsize_bulk;
 
     void set_initial_temperatures();
-    void read_parameter(FILE *);
-    void read_tablelist(FILE *);
-    void read_outlist(FILE *, int);
-    int read_in_table(FILE *, double ***);
-    int read_in_table2(FILE *, double **);
-    double read_tables(double **, int, double);
+    void read_parameter(const std::string&);
+    void read_tablelist(const std::string&);
+    void read_outlist(const std::string&, int);
+    int read_data_table(const std::string&, double***);
+    int read_temperature_table(const std::string&, double**);
+    double interpolation(double** table, int size, double A, double min = std::numeric_limits<double>::min(), double max = std::numeric_limits<double>::max());
     void Tempout();
     void Otherout();
     void laser(double);
@@ -102,10 +104,10 @@ class FixFEMTO3D : public Fix {
     void update_parameters();
     void update_parameters_bulk();
     double ki_function(double);
-    double MyCe(double,double,double);
-    double MyKet(double,double,double);
-    double MyG(double,double,double);
-};
+    double MyCe(double, double, double);
+    double MyKet(double, double, double);
+    double MyG(double, double, double);
+  };
 
 }
 

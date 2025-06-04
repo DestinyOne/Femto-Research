@@ -1,16 +1,16 @@
-Preset temperature mode (Activated = 1; Inactivated = 0)
+# Preset temperature mode (Activated = 1; Inactivated = 0)
 1
-Number of thermal solve grid points in the x, y, z directions
+# Number of thermal solve grid points in the x, y, z directions
 100 3 3
-lsurface,rsurface, electron grid units (positive integer); grid_number+1 for the right side, according to the lattice dimension
+# lsurface,rsurface, electron grid units (positive integer); grid_number+1 for the right side, according to the lattice dimension
 40 90
-n_ion, ions/volume units
+# n_ion, ions/volume units
 0.059
-GStrength, how strong the electron lattice coupling is
+# GStrength, how strong the electron lattice coupling is
 100.0
-bulk_ttm, 1 for activate, 0 for inactivate
+# bulk_ttm, 1 for activate, 0 for inactivate
 1
-Boundary thickness, length units (A), slightly larger than potential cutoff
+# Boundary thickness, length units (A), slightly larger than potential cutoff
 6.05032983
-In the bulk, number of grid points, dx >= 100 A
+# In the bulk, number of grid points, dx >= 100 A
 180
