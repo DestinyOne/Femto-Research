@@ -18,27 +18,28 @@
                           Vasily Pisarev (fix ttm mod author)
                           Weirong Yuan (fix femto3D author, Center for Materials Under eXtreme Environments(CMUXE))
 ------------------------------------------------------------------------- */
-
-#include "potential_file_reader.h"
-
-#include "lmptype.h"
-#include <mpi.h>
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "fix_femto3D.h"
+
+#include "respa.h"
+#include "comm.h"
+#include "random_mars.h"
+#include "error.h"
+#include "citeme.h"
+#include "math_const.h"
+#include "memory.h"
 #include "atom.h"
 #include "force.h"
 #include "update.h"
 #include "domain.h"
-#include "region.h"
-#include "respa.h"
-#include "comm.h"
-#include "random_mars.h"
-#include "memory.h"
-#include "error.h"
-#include "citeme.h"
-#include "math_const.h"
+#include "potential_file_reader.h"
+
+// comment now, might be necessary
+// #include <mpi.h>
+// #include <math.h>
+// #include <string.h>
+// #include <stdlib.h>
+// #include "lmptype.h"
+// #include "region.h"
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
