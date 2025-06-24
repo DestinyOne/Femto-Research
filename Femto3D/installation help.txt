@@ -1,6 +1,6 @@
 # in lammps folder
 mkdir ./build
 cd ./build
-cmake -C ../cmake/presets/femto3D.cmake -D CMAKE_INSTALL_PREFIX=../lammps_bin -D BUILD_MPI=yes ../cmake
+cmake -C ../cmake/presets/femto3D.cmake -D CMAKE_INSTALL_PREFIX=../lammps_bin -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=mpicxx -D CMAKE_C_COMPILER=mpicc -D LAMMPS_MACHINE=mpi ../cmake
 cmake --build .
 make install
