@@ -44,7 +44,6 @@ namespace LAMMPS_NS {
     int size_restart(int);
     int maxsize_restart();
     double memory_usage();
-    void grow_arrays(int);
 
   private:
 
@@ -60,7 +59,6 @@ namespace LAMMPS_NS {
     int nfileevery;
     int nlevels_respa;
     int seed, writenn, premode, NewPulse;
-    int Cesize, Gsize, Kesize, Reflecsize, Pensize, Zsize;
     class RanMars* random;
 
     std::string fp_outlist, fp_Te_bulk, fp_Ta_bulk, fp_Z, fp_Ce, fp_G, fp_Ke, fp_Pen, fp_Reflec, fp_Te_in, fp_parameter, fp_tablelist, fp_Temp, fp_TempBulk, fp_Te_out, fp_Ta_out, fp_Et_out, fp_Tidiff_out, fp_laser_out, fp_Te_early_out, fp_Ta_early_out;
@@ -68,7 +66,6 @@ namespace LAMMPS_NS {
     int nxnodes, nynodes, nznodes, total_nnodes;
     int*** Activated, *** nsum;
     double* Kenergy, * Genergy;
-    double** CeTe, ** GTe, ** KeTe, ** ReflecTe, ** PenTe, ** ZTe;
     double* ratio;
     double** flangevin;
     double** x_max;
@@ -84,17 +81,16 @@ namespace LAMMPS_NS {
     double F_0, A_cross, v_s, bound_thick, bulk_thick;
     int bulk_ttm, bxsize, lstr;
 
-    double GStrength, * ITemp, * ITempBulk;
-
-    int Tsize, Tsize_bulk;
+    double GStrength;
+    std::vector<double> CeTe, GTe, KeTe, ReflecTe, PenTe, ZTe, ITemp, ITempBulk;
 
     void set_initial_temperatures();
     void read_parameter(const std::string&);
     void read_tablelist(const std::string&);
     void read_outlist(const std::string&, int);
-    int read_data_table(const std::string&, double***);
-    int read_temperature_table(const std::string&, double**);
-    double interpolation(double** table, int size, double A, double min = std::numeric_limits<double>::min(), double max = std::numeric_limits<double>::max());
+    std::vector<double> read_data_table(const std::string& filename);
+    std::vector<double> read_temperature_table(const std::string&);
+    double interpolationFrom2DTable(std::vector<double> table, double A, double min = std::numeric_limits<double>::min(), double max = std::numeric_limits<double>::max());
     void Tempout();
     void Otherout();
     void laser(double);

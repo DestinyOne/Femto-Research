@@ -10,7 +10,7 @@
 
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
-
+#define LOG_LOCATION() printf("File: %s, Line: %d\n", __FILE__, __LINE__)
 /* ----------------------------------------------------------------------
     Contributing authors: Paul Crozier (Original fix ttm author)
                           Carolyn Phillips (Original fix ttm author)
@@ -70,7 +70,7 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
   if (lmp->citeme) lmp->citeme->add(cite_fix_femto3D);
 
   if (narg != 7 && narg != 8) error->all(FLERR, "Illegal fix femto3D command");
-
+  LOG_LOCATION();
   vector_flag = 1;
   size_vector = 2;
   global_freq = 1;
@@ -88,10 +88,10 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
 
   // fp_parameter
   read_parameter(arg[5]);
-
+  LOG_LOCATION();
   // fp_tablelist
   read_tablelist(arg[6]);
-
+  LOG_LOCATION();
   if (premode == 0) {
     // fp_outlist
     fp_outlist = arg[7];
@@ -116,6 +116,10 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
   memory->create(nsum, nxnodes, nynodes, nznodes, "femto3D:nsum");
   memory->create(sum_mass_vsq, nxnodes, nynodes, nznodes, "femto3D:sum_mass_vsq");
   memory->create(T_a, nxnodes, nynodes, nznodes, "femto3D:T_a");
+  if (bulk_ttm == 1) {
+    memory->create(x_max, nynodes, nznodes, "femto3D:x_max");
+  }
+
   if (premode == 0) {
     memory->create(Activated, nxnodes, nynodes, nznodes, "femto3D:Activated");
 
@@ -152,20 +156,16 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
     }
   }
 
-  if (premode == 1) {
-    if (bulk_ttm == 1) {
-      memory->create(x_max, nynodes, nznodes, "femto3D:x_max");
-    }
-  }
-
-  grow_arrays(atom->nmax); // allocation/reallocation of Langevin force array
-
+  flangevin = nullptr;
+  memory->grow(flangevin, atom->nmax, 3, "femto3D:flangevin");
+  // zero out the flangevin array
   for (int i = 0; i < atom->nmax; i++) {
     flangevin[i][0] = 0.0;
     flangevin[i][1] = 0.0;
     flangevin[i][2] = 0.0;
   }
 
+  LOG_LOCATION();
   atom->add_callback(Atom::GROW);
   atom->add_callback(Atom::RESTART);
 
@@ -195,25 +195,41 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
     // set initial electron temperatures from user input file
     set_initial_temperatures();
   }
-
+  LOG_LOCATION();
 }
 
 /* ---------------------------------------------------------------------- */
 
 FixFEMTO3D::~FixFEMTO3D()
 {
+  delete random;
+  memory->destroy(nsum);
+  memory->destroy(sum_mass_vsq);
+  memory->destroy(T_a);
+  memory->destroy(flangevin);
+  if (bulk_ttm == 1) {
+    memory->destroy(x_max);
+  }
+  atom->delete_callback(id, Atom::GROW);
+  atom->delete_callback(id, Atom::RESTART);
   if (premode == 0) {
-
-    delete random;
-    memory->destroy(nsum);
     memory->destroy(Activated);
-    memory->destroy(sum_mass_vsq);
     memory->destroy(sum_mass_v);
     memory->destroy(sum_mass);
     memory->destroy(average_v);
     memory->destroy(T_electron_first);
     memory->destroy(T_electron_old);
     memory->destroy(T_electron);
+    memory->destroy(net_energy_transfer);
+    memory->destroy(energy_conduction);
+    memory->destroy(ke_real);
+    memory->destroy(CeT);
+    memory->destroy(GT);
+    memory->destroy(Genergy);
+    memory->destroy(Kenergy);
+    memory->destroy(mult_factor);
+    memory->destroy(skin_layer);
+
     if (bulk_ttm == 1) {
       memory->destroy(Te_bulk);
       memory->destroy(Ta_bulk);
@@ -227,43 +243,7 @@ FixFEMTO3D::~FixFEMTO3D()
       memory->destroy(skin_layer_bulk);
       memory->destroy(E_melt_buffer);
     }
-    memory->destroy(T_a);
-    memory->destroy(flangevin);
-    memory->destroy(net_energy_transfer);
-    memory->destroy(energy_conduction);
-    memory->destroy(ZTe);
-    memory->destroy(CeTe);
-    memory->destroy(GTe);
-    memory->destroy(KeTe);
-    memory->destroy(ReflecTe);
-    memory->destroy(PenTe);
-    memory->destroy(ke_real);
-    memory->destroy(CeT);
-    memory->destroy(GT);
-    memory->destroy(Genergy);
-    memory->destroy(Kenergy);
-    memory->destroy(mult_factor);
-    memory->destroy(skin_layer);
-    atom->delete_callback(id, 0);
-    atom->delete_callback(id, 1);
   }
-
-  if (premode == 1) {
-
-    delete random;
-    memory->destroy(nsum);
-    memory->destroy(sum_mass_vsq);
-    memory->destroy(ITemp);
-    memory->destroy(ITempBulk);
-    memory->destroy(T_a);
-    if (bulk_ttm == 1) {
-      memory->destroy(x_max);
-    }
-    memory->destroy(flangevin);
-    atom->delete_callback(id, 0);
-    atom->delete_callback(id, 1);
-  }
-
 }
 
 /* ---------------------------------------------------------------------- */
@@ -291,8 +271,8 @@ void FixFEMTO3D::init()
     error->all(FLERR, "Use wrong boundaries with fix femto3D, should be f p p");
   if (domain->triclinic)
     error->all(FLERR, "Cannot use fix femto3D with triclinic box");
-  if (utils::strmatch(update->integrate_style,"^respa"))
-    nlevels_respa = (dynamic_cast<Respa *>(update->integrate))->nlevels;
+  if (utils::strmatch(update->integrate_style, "^respa"))
+    nlevels_respa = (dynamic_cast<Respa*>(update->integrate))->nlevels;
 
   if (premode == 0) {
     read_outlist(fp_outlist, static_cast<int>(1000.0 * duration));
@@ -317,12 +297,13 @@ void FixFEMTO3D::init()
 
 void FixFEMTO3D::setup(int vflag)
 {
-  if (utils::strmatch(update->integrate_style,"^verlet")) {
+  if (utils::strmatch(update->integrate_style, "^verlet")) {
     post_force_setup(vflag);
-  } else {
-    (dynamic_cast<Respa *>(update->integrate))->copy_flevel_f(nlevels_respa-1);
-    post_force_respa_setup(vflag,nlevels_respa-1,0);
-    (dynamic_cast<Respa *>(update->integrate))->copy_f_flevel(nlevels_respa-1);
+  }
+  else {
+    (dynamic_cast<Respa*>(update->integrate))->copy_flevel_f(nlevels_respa - 1);
+    post_force_respa_setup(vflag, nlevels_respa - 1, 0);
+    (dynamic_cast<Respa*>(update->integrate))->copy_f_flevel(nlevels_respa - 1);
   }
 }
 
@@ -896,7 +877,7 @@ void FixFEMTO3D::end_of_step()
                   if (indic && free_path * over_LT > 0.1) {
                     double LT_r = 1.0 / over_LT; // electron temperature gradient length
                     double T_e = (T_electron_old[right_xnode][iynode][iznode] + T_electron_old[ixnode][iynode][iznode]) / 2.0;
-                    double Zcharge = interpolation(ZTe, Zsize, T_e, 0.0);
+                    double Zcharge = interpolationFrom2DTable(ZTe, T_e, 0.0);
                     double Ni = (nsum[right_xnode][iynode][iznode] + nsum[ixnode][iynode][iznode]) / 2.0 / del_vol;
                     double q_L = f_L * Zcharge * Ni * force->boltz * T_e * sqrt(force->boltz * T_e / m_e);
                     flux_r /= 1 + abs(flux_r) / q_L;
@@ -911,7 +892,7 @@ void FixFEMTO3D::end_of_step()
                   if (indic && free_path * over_LT > 0.1) {
                     double LT_l = 1.0 / over_LT; // electron temperature gradient length
                     double T_e = (T_electron_old[left_xnode][iynode][iznode] + T_electron_old[ixnode][iynode][iznode]) / 2.0;
-                    double Zcharge = interpolation(ZTe, Zsize, T_e, 0.0);
+                    double Zcharge = interpolationFrom2DTable(ZTe, T_e, 0.0);
                     double Ni = (nsum[left_xnode][iynode][iznode] + nsum[ixnode][iynode][iznode]) / 2.0 / del_vol;
                     double q_L = f_L * Zcharge * Ni * force->boltz * T_e * sqrt(force->boltz * T_e / m_e);
                     flux_l /= 1 + abs(flux_l) / q_L;
@@ -1268,10 +1249,10 @@ void FixFEMTO3D::laser(double duration_temp)
         T_i = T_a[ixnode][iynode][iznode];
         //Ni = nsum[ixnode][iynode][iznode]/del_vol;
         Ni = ionic_density; // During laser, Ni is not changing
-        skin_layer[ixnode][iynode][iznode] = interpolation(PenTe, Pensize, T_e, 0.0);
+        skin_layer[ixnode][iynode][iznode] = interpolationFrom2DTable(PenTe, T_e, 0.0);
 
         if (ixnode == t_surface_l) {
-          double refl = interpolation(ReflecTe, Reflecsize, T_e, 0.0, 1.0);
+          double refl = interpolationFrom2DTable(ReflecTe, T_e, 0.0, 1.0);
           mult_factor[ixnode][iynode][iznode] = 1.0 - refl; // Absorption
           reflectivity += 1 - mult_factor[ixnode][iynode][iznode];
           // if (pid == 0) printf("multi = %f;   skin = %f\n",mult_factor[ixnode][iynode][iznode],skin_layer[ixnode][iynode][iznode]);
@@ -1298,7 +1279,7 @@ void FixFEMTO3D::laser_bulk()
         T_e = Te_bulk[ixnode][iynode][iznode];
         T_i = Ta_bulk[ixnode][iynode][iznode];
         Ni = ionic_density;
-        skin_layer_bulk[ixnode][iynode][iznode] = interpolation(PenTe, Pensize, T_e, 0.0);
+        skin_layer_bulk[ixnode][iynode][iznode] = interpolationFrom2DTable(PenTe, T_e, 0.0);
         if (skin_layer_bulk[ixnode][iynode][iznode] < 0.0)
           skin_layer_bulk[ixnode][iynode][iznode] = 0.0;
 
@@ -1317,7 +1298,7 @@ double FixFEMTO3D::MyCe(double T_e, double Ni, double T_i) {
   int isFromTable = 1;
   double Ce;
   if (isFromTable) {
-    Ce = interpolation(CeTe, Cesize, T_e, 0.0) / ionic_density * Ni;
+    Ce = interpolationFrom2DTable(CeTe, T_e, 0.0) / ionic_density * Ni;
   }
   else {
     Ce = 0;
@@ -1337,7 +1318,7 @@ double FixFEMTO3D::MyKet(double T_e, double Ni, double T_i) {
     pp = 0.2;
   }
   if (isFromTable) {
-    ket = interpolation(KeTe, Kesize, T_e, 0.0);
+    ket = interpolationFrom2DTable(KeTe, T_e, 0.0);
   }
   else { //Numerical Calculation
 
@@ -1392,7 +1373,7 @@ double FixFEMTO3D::MyG(double T_e, double Ni, double T_i) {
 
   if (isFromTable) {
     // Lin's data
-    G = interpolation(GTe, Gsize, T_e, 0.0);
+    G = interpolationFrom2DTable(GTe, 0.0);
   }
   else {
     // Constant
@@ -1747,21 +1728,6 @@ double FixFEMTO3D::memory_usage()
   return bytes;
 }
 
-/* ---------------------------------------------------------------------- */
-
-void FixFEMTO3D::grow_arrays(int ngrow)
-{
-  flangevin = NULL;
-  memory->grow(flangevin, ngrow, 3, "femto3D:flangevin");
-  // zero out the flangevin array
-  for (int i = 0; i < atom->nmax; i++) {
-    flangevin[i][0] = 0.0;
-    flangevin[i][1] = 0.0;
-    flangevin[i][2] = 0.0;
-  }
-}
-
-
 /* ----------------------------------------------------------------------
    pack entire state of Fix into one write
 ------------------------------------------------------------------------- */
@@ -1932,65 +1898,67 @@ int FixFEMTO3D::size_restart(int nlocal)
    read Z, G, C, K from a user-specified file called by all procs
 ------------------------------------------------------------------------- */
 
-int FixFEMTO3D::read_data_table(const std::string& filename, double*** iTe)
+std::vector<double> FixFEMTO3D::read_data_table(const std::string& filename)
 {
   PotentialFileReader reader(lmp, filename, "ttm/femto3D data table");
 
   int size = reader.next_values(1).next_int();
   int count = 0;
-  double** xTe;
-  memory->create(xTe, size, 2, "femto3D:read_data_table");
+  std::vector<double> data2D;
+  data2D.reserve(size * 2);
   while (count < size) {
     auto line = reader.next_values(2);
     if (!line.has_next())
       break;
-    xTe[count][0] = line.next_double();
-    xTe[count][1] = line.next_double();
-    if (xTe[count][0] < 0.0 || xTe[count][1] < 0.0) error->one(FLERR, "Fix femto3D electron temperatures or read_data_table must be >= 0.0");
+    double temperature = line.next_double();
+    double value = line.next_double();
+    if (temperature < 0.0 || value < 0.0) error->one(FLERR, "Fix femto3D electron temperatures or read_data_table must be >= 0.0");
+    data2D.push_back(temperature);
+    data2D.push_back(value);
     count++;
   }
   if (size != count) error->one(FLERR, "Fix femto3D read_data_table has size problems, register size is greater than actual size");
-  *iTe = xTe;
-  return count;
+  return data2D;
 }
 
-int FixFEMTO3D::read_temperature_table(const std::string& filename, double** iTe)
+std::vector<double> FixFEMTO3D::read_temperature_table(const std::string& filename)
 {
   PotentialFileReader reader(lmp, filename, "ttm/femto3D temperature table");
 
   int size = reader.next_values(1).next_int();
 
   int count = 0;
-  double* ITemp;
-  memory->create(ITemp, size, "femto3D:read_temperature_table");
+  std::vector<double> ITemp;
+  ITemp.reserve(size);
   while (count < size) {
-    ITemp[count] = reader.next_values(1).next_double();
-    if (ITemp[count] < 0.0) error->one(FLERR, "Fix femto3D input temperatures must be >= 0.0");
+    double temperature = reader.next_values(1).next_double();
+    if (temperature < 0.0) error->one(FLERR, "Fix femto3D input temperatures must be >= 0.0");
+    ITemp.push_back(temperature);
     count++;
   }
   if (size != count) error->one(FLERR, "Fix femto3D read_temperature_table has size problems, register size is greater than actual size");
-  *iTe = ITemp;
-  return count;
+  return ITemp;
 }
 
 /* ----------------------------------------------------------------------
    read tables from a 2D array
 ------------------------------------------------------------------------- */
 
-double FixFEMTO3D::interpolation(double** table, int size, double A, double min, double max)
+double FixFEMTO3D::interpolationFrom2DTable(std::vector<double> table, double A, double min, double max)
 {
   double B;
-  int i;
-  for (int j = 0; j < size; j++) {
+  size_t i;
+  size_t size = table.size() / 2;
+  for (size_t j = 0; j < size; j++) {
     i = j;
-    if (table[j][0] >= A) break;
+    if (table[j * 2 + 0] >= A) break;
   }
 
   if (i == 0)
-    B = table[i][1];
+    B = table[i * 2 + 1];
   else
-    B = A * (table[i][1] - table[i - 1][1]) / (table[i][0] - table[i - 1][0]) +
-    (table[i][0] * table[i - 1][1] - table[i][1] * table[i - 1][0]) / (table[i][0] - table[i - 1][0]);
+    B = A * (table[i * 2 + 1] - table[(i - 1) * 2 + 1]) / (table[i * 2 + 0] - table[(i - 1) * 2 + 0]) +
+    (table[i * 2 + 0] * table[(i - 1) * 2 + 1] - table[i * 2 + 1] * table[(i - 1) * 2 + 0]) / (table[i * 2 + 0] - table[(i - 1) * 2 + 0]);
 
   if (B < min) B = min;
   if (B > max) B = max;
@@ -2179,6 +2147,8 @@ void FixFEMTO3D::read_parameter(const std::string& filename)
 
 void FixFEMTO3D::read_tablelist(const std::string& f_tablelist)
 {
+  int Cesize, Gsize, Kesize, Reflecsize, Pensize, Zsize;
+  int Tsize, Tsize_bulk;
   if (comm->me == 0) {
 
     try {
@@ -2193,24 +2163,31 @@ void FixFEMTO3D::read_tablelist(const std::string& f_tablelist)
         fp_Reflec = reader.next_values(1).next_string();
         fp_Pen = reader.next_values(1).next_string();
 
-        Zsize = read_data_table(fp_Z, &ZTe);
-        Cesize = read_data_table(fp_Ce, &CeTe);
-        Gsize = read_data_table(fp_G, &GTe);
-        Kesize = read_data_table(fp_Ke, &KeTe);
-        Reflecsize = read_data_table(fp_Reflec, &ReflecTe);
-        Pensize = read_data_table(fp_Pen, &PenTe);
+        ZTe = read_data_table(fp_Z);
+        Zsize = ZTe.size() / 2;
+        CeTe = read_data_table(fp_Ce);
+        Cesize = CeTe.size() / 2;
+        GTe = read_data_table(fp_G);
+        Gsize = GTe.size() / 2;
+        KeTe = read_data_table(fp_Ke);
+        Kesize = KeTe.size() / 2;
+        ReflecTe = read_data_table(fp_Reflec);
+        Reflecsize = ReflecTe.size() / 2;
+        PenTe = read_data_table(fp_Pen);
+        Pensize = PenTe.size() / 2;
+
       }
       else if (premode == 1) {
-
         fp_Temp = reader.next_string();
         fp_Ta_out = reader.next_string();
-        Tsize = read_temperature_table(fp_Temp, &ITemp);
-        if (Tsize != surface_r - surface_l) error->all(FLERR, "Tsize does not match");
-        // printf("%s\n", fp_Temp.c_str());
+        ITemp = read_temperature_table(fp_Temp);
+        Tsize = ITemp.size();
+        if (Tsize!= surface_r - surface_l) error->all(FLERR, "Tsize does not match");
 
         if (bulk_ttm == 1) {
           fp_TempBulk = reader.next_string();
-          Tsize_bulk = read_temperature_table(fp_TempBulk, &ITempBulk);
+          ITempBulk = read_temperature_table(fp_TempBulk);
+          Tsize_bulk = ITempBulk.size();
           if (Tsize_bulk != bxsize) error->all(FLERR, "Tsize_bulk does not match");
         }
       }
@@ -2219,7 +2196,6 @@ void FixFEMTO3D::read_tablelist(const std::string& f_tablelist)
       error->one(FLERR, e.what());
     }
   }
-
   if (premode == 0) {
     MPI_Bcast(&Zsize, 1, MPI_INT, 0, world);
     MPI_Bcast(&Cesize, 1, MPI_INT, 0, world);
@@ -2228,19 +2204,35 @@ void FixFEMTO3D::read_tablelist(const std::string& f_tablelist)
     MPI_Bcast(&Reflecsize, 1, MPI_INT, 0, world);
     MPI_Bcast(&Pensize, 1, MPI_INT, 0, world);
 
-    MPI_Bcast(&ZTe[0][0], 2 * Zsize, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&CeTe[0][0], 2 * Cesize, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&GTe[0][0], 2 * Gsize, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&KeTe[0][0], 2 * Kesize, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&ReflecTe[0][0], 2 * Reflecsize, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&PenTe[0][0], 2 * Pensize, MPI_DOUBLE, 0, world);
+    if (comm->me != 0) {
+      ZTe.resize(2 * Zsize);
+      CeTe.resize(2 * Cesize);
+      GTe.resize(2 * Gsize);
+      KeTe.resize(2 * Kesize);
+      ReflecTe.resize(2 * Reflecsize);
+      PenTe.resize(2 * Pensize);
+    }
+
+    MPI_Bcast(ZTe.data(), 2 * Zsize, MPI_DOUBLE, 0, world);
+    MPI_Bcast(CeTe.data(), 2 * Cesize, MPI_DOUBLE, 0, world);
+    MPI_Bcast(GTe.data(), 2 * Gsize, MPI_DOUBLE, 0, world);
+    MPI_Bcast(KeTe.data(), 2 * Kesize, MPI_DOUBLE, 0, world);
+    MPI_Bcast(ReflecTe.data(), 2 * Reflecsize, MPI_DOUBLE, 0, world);
+    MPI_Bcast(PenTe.data(), 2 * Pensize, MPI_DOUBLE, 0, world);
   }
   else if (premode == 1) {
     MPI_Bcast(&Tsize, 1, MPI_INT, 0, world);
-    MPI_Bcast(ITemp, Tsize, MPI_DOUBLE, 0, world);
+    if (comm->me != 0) {
+      ITemp.resize(Tsize);
+    }
+    MPI_Bcast(ITemp.data(), Tsize, MPI_DOUBLE, 0, world);
+
     if (bulk_ttm == 1) {
       MPI_Bcast(&Tsize_bulk, 1, MPI_INT, 0, world);
-      MPI_Bcast(ITempBulk, Tsize_bulk, MPI_DOUBLE, 0, world);
+      if (comm->me != 0) {
+        ITempBulk.resize(Tsize_bulk);
+      }
+      MPI_Bcast(ITempBulk.data(), Tsize_bulk, MPI_DOUBLE, 0, world);
     }
   }
 }
@@ -2250,7 +2242,7 @@ void FixFEMTO3D::read_outlist(const std::string& fp_outlist, int nowdur)
   if (comm->me == 0) {
     try {
       PotentialFileReader reader(lmp, fp_outlist, "ttm/femto3D output list");
-      FILE * fp;
+      FILE* fp;
       bool flag = (nowdur <= 100); // create new output files if restart before 0.1 ps
       if (nfileevery > 0) {
         fp_Ta_out = reader.next_string();
@@ -2286,15 +2278,16 @@ void FixFEMTO3D::read_outlist(const std::string& fp_outlist, int nowdur)
 
         }
       }
-    } catch (std::exception &e) {
-      error->one(FLERR,e.what());
+    }
+    catch (std::exception& e) {
+      error->one(FLERR, e.what());
     }
   }
 }
 
 void FixFEMTO3D::Tempout() {
   if (comm->me == 0) {
-    FILE * fp;
+    FILE* fp;
     // output nodal temperatures for current timestep
     if ((nfileevery) && !(update->ntimestep % nfileevery)) {
       fp = fopen(fp_Ta_out.c_str(), "a");
@@ -2387,7 +2380,7 @@ void FixFEMTO3D::Tempout() {
 void FixFEMTO3D::Otherout() {
 
   if (comm->me == 0) {
-    FILE * fp;
+    FILE* fp;
 
     for (int ixnode = 0; ixnode < nxnodes; ixnode++) {
       double Gtemp = 0.0;
