@@ -10,7 +10,7 @@ This is the modified LAMMPS function based on its two-temperature function. Put 
 A target generated in MD is preheated to a wanted temperature and then relaxes to equilibrium. The output file for further use is a LAMMPS restart file for further simulation. The default output from the sample input code is `restart.equil`. Example: `mpiexec -np 60 PATH/TO/YOUR/lmp_mpi -in Au_TTM_pre.in` with all necessary parameter files in the same folder.
 
 ## `Common Runs`
-The LAMMPS input file requires a restart file which would be generated from the Preheating LAMMPS codes. The restart file by default should be renamed from `restart.equil` to `TTM_restart.0`. Example: `mpiexec -np 60 PATH/TO/YOUR/lmp_mpi -in Au_TTM_restart.in` with all necessary parameter files in the same folder.
+The LAMMPS input file requires a restart file which would be generated from the Preheating LAMMPS codes. The restart file by default should be renamed from `TTM_pre_restart.*` to `TTM_restart.0`. Example: `mpiexec -np 60 PATH/TO/YOUR/lmp_mpi -in Au_TTM_restart.in` with all necessary parameter files in the same folder.
 
 ## `Au Parameters`
 Example parameters for Au. They are required for common runs. The units are based on the metal-style of LAMMPS.
