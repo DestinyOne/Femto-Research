@@ -10,7 +10,7 @@
 
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
-#define LOG_LOCATION() printf("File: %s, Line: %d\n", __FILE__, __LINE__)
+
 /* ----------------------------------------------------------------------
     Contributing authors: Paul Crozier (Original fix ttm author)
                           Carolyn Phillips (Original fix ttm author)
@@ -70,7 +70,7 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
   if (lmp->citeme) lmp->citeme->add(cite_fix_femto3D);
 
   if (narg != 7 && narg != 8) error->all(FLERR, "Illegal fix femto3D command");
-  LOG_LOCATION();
+
   vector_flag = 1;
   size_vector = 2;
   global_freq = 1;
@@ -88,10 +88,8 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
 
   // fp_parameter
   read_parameter(arg[5]);
-  LOG_LOCATION();
   // fp_tablelist
   read_tablelist(arg[6]);
-  LOG_LOCATION();
   if (premode == 0) {
     // fp_outlist
     fp_outlist = arg[7];
@@ -165,7 +163,6 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
     flangevin[i][2] = 0.0;
   }
 
-  LOG_LOCATION();
   atom->add_callback(Atom::GROW);
   atom->add_callback(Atom::RESTART);
 
@@ -195,7 +192,6 @@ FixFEMTO3D::FixFEMTO3D(LAMMPS* lmp, int narg, char** arg) :
     // set initial electron temperatures from user input file
     set_initial_temperatures();
   }
-  LOG_LOCATION();
 }
 
 /* ---------------------------------------------------------------------- */
